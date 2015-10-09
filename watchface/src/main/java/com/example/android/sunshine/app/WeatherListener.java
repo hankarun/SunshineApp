@@ -21,8 +21,8 @@ public class WeatherListener extends WearableListenerService {
     private GoogleApiClient mGoogleApiClient;
     private static String condition;
     private static int temperature;
-    private static long sunrise;
-    private static long sunset;
+    private static int sunrise;
+    private static int sunset;
     private static int temperature_scale;
     private static int theme = 3;
     private static int time_unit;
@@ -66,18 +66,19 @@ public class WeatherListener extends WearableListenerService {
             }
 
             if (dataMap.containsKey(Consts.KEY_WEATHER_SUNRISE)) {
-                sunrise = dataMap.getLong(Consts.KEY_WEATHER_SUNRISE);
+                sunrise = dataMap.getInt(Consts.KEY_WEATHER_SUNRISE);
             }
 
             if (dataMap.containsKey(Consts.KEY_WEATHER_SUNSET)) {
-                sunset = dataMap.getLong(Consts.KEY_WEATHER_SUNSET);
+                sunset = dataMap.getInt(Consts.KEY_WEATHER_SUNSET);
+                Log.d("waer sunset", sunset+"");
             }
 
             config.putLong(Consts.KEY_WEATHER_UPDATE_TIME, System.currentTimeMillis());
             config.putString(Consts.KEY_WEATHER_CONDITION, condition);
             config.putInt(Consts.KEY_WEATHER_TEMPERATURE, temperature);
-            config.putLong(Consts.KEY_WEATHER_SUNRISE, sunrise);
-            config.putLong(Consts.KEY_WEATHER_SUNSET, sunset);
+            config.putInt(Consts.KEY_WEATHER_SUNRISE, sunrise);
+            config.putInt(Consts.KEY_WEATHER_SUNSET, sunset);
         } else {
             if (!alreadyInitialize) {
                 Wearable.NodeApi.getLocalNode(mGoogleApiClient).setResultCallback(new ResultCallback<NodeApi.GetLocalNodeResult>() {
@@ -158,11 +159,11 @@ public class WeatherListener extends WearableListenerService {
         }
 
         if (config.containsKey(Consts.KEY_WEATHER_SUNRISE)) {
-            sunrise = config.getLong(Consts.KEY_WEATHER_SUNRISE);
+            sunrise = config.getInt(Consts.KEY_WEATHER_SUNRISE);
         }
 
         if (config.containsKey(Consts.KEY_WEATHER_SUNSET)) {
-            sunset = config.getLong(Consts.KEY_WEATHER_SUNSET);
+            sunset = config.getInt(Consts.KEY_WEATHER_SUNSET);
         }
 
         if (config.containsKey(Consts.KEY_CONFIG_TEMPERATURE_SCALE)) {

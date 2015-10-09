@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
+import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.Utility;
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -44,17 +45,22 @@ public class WatchDataService extends WearableListenerService{
     @Override
     public int onStartCommand(Intent intent,int flags,int startId)
     {
-        //Start task
-        startTask();
+        if ( intent != null )
+        {
+                mPeerId = intent.getStringExtra( "PeerId" );
+                Log.d("Activity " + mPeerId, "M");
+                startTask();
+
+        }
         return super.onStartCommand( intent, flags, startId );
     }
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent )
     {
-        super.onMessageReceived( messageEvent );
+        super.onMessageReceived(messageEvent);
         mPeerId = messageEvent.getSourceNodeId();
-        Log.d("Activity", "MessageReceived: " + messageEvent.getPath());
+        Log.d("Activity " + mPeerId, "MessageReceived: " + messageEvent.getPath());
         if ( messageEvent.getPath().equals( PATH_SERVICE_REQUIRE ) )
         {
             startTask();
@@ -88,7 +94,7 @@ public class WatchDataService extends WearableListenerService{
 
         // Extract the weather data from the Cursor
         int weatherId = data.getInt(INDEX_WEATHER_ID);
-        int weatherArtResourceId = Utility.getArtResourceForWeatherCondition(weatherId);
+        int weatherArtResourceId = Utility.getIconResourceForWeatherCondition(weatherId);
         String description = data.getString(INDEX_SHORT_DESC);
         double maxTemp = data.getDouble(INDEX_MAX_TEMP);
         double minTemp = data.getDouble(INDEX_MIN_TEMP);
@@ -98,8 +104,9 @@ public class WatchDataService extends WearableListenerService{
         //real
         config.putInt( KEY_WEATHER_TEMPERATURE, (int) maxTemp );
         config.putString( KEY_WEATHER_CONDITION, description );
-        config.putLong( KEY_WEATHER_SUNSET, 123 );
-        config.putLong( KEY_WEATHER_SUNRISE, 321 );
+        config.putInt(KEY_WEATHER_SUNSET, weatherId);
+        config.putInt( KEY_WEATHER_SUNRISE, (int) minTemp );
+        Log.d("app sunset",weatherId+"");
 
         //test
         //Random random = new Random();
@@ -119,4 +126,5 @@ public class WatchDataService extends WearableListenerService{
                         }
                 );
     }
+
 }

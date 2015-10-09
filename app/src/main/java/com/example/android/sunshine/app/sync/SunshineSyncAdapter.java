@@ -62,6 +62,8 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
 
+    public static String APPID = "e38b12231c50b5234b6edebe942168d6";
+
 
     private static final String[] NOTIFY_WEATHER_PROJECTION = new String[] {
             WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
@@ -123,6 +125,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                     .appendQueryParameter(FORMAT_PARAM, format)
                     .appendQueryParameter(UNITS_PARAM, units)
                     .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
+                    .appendQueryParameter("APPID",APPID)
                     .build();
 
             URL url = new URL(builtUri.toString());
