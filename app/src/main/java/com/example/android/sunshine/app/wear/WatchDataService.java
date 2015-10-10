@@ -16,11 +16,13 @@ import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
+import java.util.Random;
+
 public class WatchDataService extends WearableListenerService{
     public static final  String KEY_WEATHER_CONDITION   = "Condition";
-    public static final  String KEY_WEATHER_SUNRISE     = "Sunrise";
-    public static final  String KEY_WEATHER_SUNSET      = "Sunset";
-    public static final  String KEY_WEATHER_TEMPERATURE = "Temperature";
+    public static final  String KEY_WEATHER_TEMPERATUREMIN  = "Temperaturemin";
+    public static final  String KEY_WEATHER_WID = "wID";
+    public static final  String KEY_WEATHER_TEMPERATUREMAX = "Temperaturemax";
     public static final  String PATH_WEATHER_INFO       = "/WeatherWatchFace/WeatherInfo";
     public static final  String PATH_SERVICE_REQUIRE    = "/WeatherService/Require";
     private static final String TAG                     = "WeatherService";
@@ -94,25 +96,16 @@ public class WatchDataService extends WearableListenerService{
 
         // Extract the weather data from the Cursor
         int weatherId = data.getInt(INDEX_WEATHER_ID);
-        int weatherArtResourceId = Utility.getIconResourceForWeatherCondition(weatherId);
         String description = data.getString(INDEX_SHORT_DESC);
         double maxTemp = data.getDouble(INDEX_MAX_TEMP);
         double minTemp = data.getDouble(INDEX_MIN_TEMP);
-        String formattedMaxTemperature = Utility.formatTemperature(this, maxTemp);
-        String formattedMinTemperature = Utility.formatTemperature(this, minTemp);
         data.close();
         //real
-        config.putInt( KEY_WEATHER_TEMPERATURE, (int) maxTemp );
-        config.putString( KEY_WEATHER_CONDITION, description );
-        config.putInt(KEY_WEATHER_SUNSET, weatherId);
-        config.putInt( KEY_WEATHER_SUNRISE, (int) minTemp );
-        Log.d("app sunset",weatherId+"");
 
-        //test
-        //Random random = new Random();
-        //config.putInt("Temperature",random.nextInt(100));
-        //config.putString("Condition", new String[]{"clear","rain","snow","thunder","cloudy"}[random.nextInt
-        // (4)]);
+        config.putInt(KEY_WEATHER_TEMPERATUREMAX, (int) maxTemp );
+        config.putString(KEY_WEATHER_CONDITION, description );
+        config.putInt(KEY_WEATHER_WID, weatherId);
+        config.putInt(KEY_WEATHER_TEMPERATUREMIN, (int) minTemp );
 
         Wearable.MessageApi.sendMessage( mGoogleApiClient, mPeerId, PATH_WEATHER_INFO, config.toByteArray() )
                 .setResultCallback(

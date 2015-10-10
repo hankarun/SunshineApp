@@ -21,12 +21,8 @@ public class WeatherListener extends WearableListenerService {
     private GoogleApiClient mGoogleApiClient;
     private static String condition;
     private static int temperature;
-    private static int sunrise;
-    private static int sunset;
-    private static int temperature_scale;
-    private static int theme = 3;
-    private static int time_unit;
-    private static int interval;
+    private static int temperaturemin;
+    private static int wID;
     private static boolean alreadyInitialize;
     private static String path;
 
@@ -61,24 +57,22 @@ public class WeatherListener extends WearableListenerService {
                 condition = dataMap.getString(Consts.KEY_WEATHER_CONDITION);
             }
 
-            if (dataMap.containsKey(Consts.KEY_WEATHER_TEMPERATURE)) {
-                temperature = dataMap.getInt(Consts.KEY_WEATHER_TEMPERATURE);
+            if (dataMap.containsKey(Consts.KEY_WEATHER_TEMPERATUREMAX)) {
+                temperature = dataMap.getInt(Consts.KEY_WEATHER_TEMPERATUREMAX);
             }
 
-            if (dataMap.containsKey(Consts.KEY_WEATHER_SUNRISE)) {
-                sunrise = dataMap.getInt(Consts.KEY_WEATHER_SUNRISE);
+            if (dataMap.containsKey(Consts.KEY_WEATHER_TEMPERATUREMIN)) {
+                temperaturemin = dataMap.getInt(Consts.KEY_WEATHER_TEMPERATUREMIN);
             }
 
-            if (dataMap.containsKey(Consts.KEY_WEATHER_SUNSET)) {
-                sunset = dataMap.getInt(Consts.KEY_WEATHER_SUNSET);
-                Log.d("waer sunset", sunset+"");
+            if (dataMap.containsKey(Consts.KEY_WEATHER_WID)) {
+                wID = dataMap.getInt(Consts.KEY_WEATHER_WID);
             }
 
-            config.putLong(Consts.KEY_WEATHER_UPDATE_TIME, System.currentTimeMillis());
             config.putString(Consts.KEY_WEATHER_CONDITION, condition);
-            config.putInt(Consts.KEY_WEATHER_TEMPERATURE, temperature);
-            config.putInt(Consts.KEY_WEATHER_SUNRISE, sunrise);
-            config.putInt(Consts.KEY_WEATHER_SUNSET, sunset);
+            config.putInt(Consts.KEY_WEATHER_TEMPERATUREMAX, temperature);
+            config.putInt(Consts.KEY_WEATHER_TEMPERATUREMIN, temperaturemin);
+            config.putInt(Consts.KEY_WEATHER_WID, wID);
         } else {
             if (!alreadyInitialize) {
                 Wearable.NodeApi.getLocalNode(mGoogleApiClient).setResultCallback(new ResultCallback<NodeApi.GetLocalNodeResult>() {
@@ -115,27 +109,6 @@ public class WeatherListener extends WearableListenerService {
                 }
             }
 
-            if (dataMap.containsKey(Consts.KEY_CONFIG_TEMPERATURE_SCALE)) {
-                temperature_scale = dataMap.getInt(Consts.KEY_CONFIG_TEMPERATURE_SCALE);
-            }
-
-            if (dataMap.containsKey(Consts.KEY_CONFIG_THEME)) {
-                theme = dataMap.getInt(Consts.KEY_CONFIG_THEME);
-            }
-
-            if (dataMap.containsKey(Consts.KEY_CONFIG_TIME_UNIT)) {
-                time_unit = dataMap.getInt(Consts.KEY_CONFIG_TIME_UNIT);
-            }
-
-            if (dataMap.containsKey(Consts.KEY_CONFIG_REQUIRE_INTERVAL)) {
-                interval = dataMap.getInt(Consts.KEY_CONFIG_REQUIRE_INTERVAL);
-            }
-
-
-            config.putInt(Consts.KEY_CONFIG_TEMPERATURE_SCALE, temperature_scale);
-            config.putInt(Consts.KEY_CONFIG_THEME, theme);
-            config.putInt(Consts.KEY_CONFIG_TIME_UNIT, time_unit);
-            config.putInt(Consts.KEY_CONFIG_REQUIRE_INTERVAL, interval);
         }
 
         Wearable.DataApi.putDataItem(mGoogleApiClient, putDataMapRequest.asPutDataRequest())
@@ -154,48 +127,16 @@ public class WeatherListener extends WearableListenerService {
             condition = config.getString(Consts.KEY_WEATHER_CONDITION);
         }
 
-        if (config.containsKey(Consts.KEY_WEATHER_TEMPERATURE)) {
-            temperature = config.getInt(Consts.KEY_WEATHER_TEMPERATURE);
+        if (config.containsKey(Consts.KEY_WEATHER_TEMPERATUREMAX)) {
+            temperature = config.getInt(Consts.KEY_WEATHER_TEMPERATUREMAX);
         }
 
-        if (config.containsKey(Consts.KEY_WEATHER_SUNRISE)) {
-            sunrise = config.getInt(Consts.KEY_WEATHER_SUNRISE);
+        if (config.containsKey(Consts.KEY_WEATHER_TEMPERATUREMIN)) {
+            temperaturemin = config.getInt(Consts.KEY_WEATHER_TEMPERATUREMIN);
         }
 
-        if (config.containsKey(Consts.KEY_WEATHER_SUNSET)) {
-            sunset = config.getInt(Consts.KEY_WEATHER_SUNSET);
+        if (config.containsKey(Consts.KEY_WEATHER_WID)) {
+            wID = config.getInt(Consts.KEY_WEATHER_WID);
         }
-
-        if (config.containsKey(Consts.KEY_CONFIG_TEMPERATURE_SCALE)) {
-            temperature_scale = config.getInt(Consts.KEY_CONFIG_TEMPERATURE_SCALE);
-        }
-
-        if (config.containsKey(Consts.KEY_CONFIG_THEME)) {
-            theme = config.getInt(Consts.KEY_CONFIG_THEME);
-        }
-
-        if (config.containsKey(Consts.KEY_CONFIG_TIME_UNIT)) {
-            time_unit = config.getInt(Consts.KEY_CONFIG_TIME_UNIT);
-        }
-
-        if (config.containsKey(Consts.KEY_CONFIG_REQUIRE_INTERVAL)) {
-            interval = config.getInt(Consts.KEY_CONFIG_REQUIRE_INTERVAL);
-        }
-    }
-
-    public class Consts {
-        public static final String KEY_CONFIG_REQUIRE_INTERVAL = "RequireInterval";
-        public static final String KEY_CONFIG_TEMPERATURE_SCALE = "TemperatureScale";
-        public static final String KEY_WEATHER_CONDITION = "Condition";
-        public static final String KEY_WEATHER_SUNRISE = "Sunrise";
-        public static final String KEY_WEATHER_SUNSET = "Sunset";
-        public static final String KEY_CONFIG_THEME = "Theme";
-        public static final String KEY_CONFIG_TIME_UNIT = "TimeUnit";
-        public static final String KEY_WEATHER_TEMPERATURE = "Temperature";
-        public static final String KEY_WEATHER_UPDATE_TIME = "Update_Time";
-        public static final String PATH_CONFIG = "/WeatherWatchFace/Config/";
-        public static final String PATH_WEATHER_INFO = "/WeatherWatchFace/WeatherInfo";
-        public static final String PATH_WEATHER_REQUIRE = "/WeatherService/Require";
-        public static final String COLON_STRING = ":";
     }
 }

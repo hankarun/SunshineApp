@@ -40,6 +40,7 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
@@ -57,6 +58,7 @@ import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -109,6 +111,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
         Paint mBackgroundPaint;
         Paint mTextPaint;
+        Paint mWeatherPaint;
+
 
         boolean mAmbient;
 
@@ -127,8 +131,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
         protected int mBackgroundColor;
         protected int mBackgroundDefaultColor;
         protected int mRequireInterval;
-        protected int mTemperature = Integer.MAX_VALUE;
-        protected int mTemperaturemin = Integer.MAX_VALUE;
+        protected int mTemperature = 0;
+        protected int mTemperaturemin = 0;
         protected int mTemperatureScale;
         protected long mWeatherInfoReceivedTime;
         protected long mWeatherInfoRequiredTime;
@@ -209,7 +213,10 @@ public class MyWatchFace extends CanvasWatchFaceService {
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
                     .setBackgroundVisibility(WatchFaceStyle.BACKGROUND_VISIBILITY_INTERRUPTIVE)
                     .setShowSystemUiTime(false)
+                    .setStatusBarGravity(Gravity.TOP | Gravity.CENTER)
+                    .setHotwordIndicatorGravity(Gravity.TOP | Gravity.CENTER )
                     .build());
+
             Resources resources = MyWatchFace.this.getResources();
             mYOffset = resources.getDimension(R.dimen.digital_y_offset);
 
@@ -218,6 +225,9 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
             mTextPaint = new Paint();
             mTextPaint = createTextPaint(resources.getColor(R.color.digital_text));
+
+            mWeatherPaint = new Paint();
+            mWeatherPaint = createTextPaint(resources.getColor(R.color.digital_text));
 
             mTickAndCirclePaint = new Paint();
             mTickAndCirclePaint.setColor(resources.getColor(R.color.digital_text));
@@ -303,9 +313,10 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mXOffset = resources.getDimension(isRound
                     ? R.dimen.digital_x_offset_round : R.dimen.digital_x_offset);
             float textSize = resources.getDimension(isRound
-                    ? R.dimen.digital_text_size_round_small : R.dimen.digital_text_size_small);
+                    ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
 
             mTextPaint.setTextSize(textSize);
+            mWeatherPaint.setTextSize(resources.getDimension(R.dimen.digital_text_size_round_small));
         }
 
         @Override
@@ -319,6 +330,31 @@ public class MyWatchFace extends CanvasWatchFaceService {
             super.onTimeTick();
             requireWeatherInfo();
             invalidate();
+        }
+
+        public String nodeId;
+
+        private void retrieveDeviceNode(final String message, final String uri) {
+            final GoogleApiClient client = mGoogleApiClient;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    client.blockingConnect(100, TimeUnit.MILLISECONDS);
+                    NodeApi.GetConnectedNodesResult result =
+                            Wearable.NodeApi.getConnectedNodes(client).await();
+                    List<Node> nodes = result.getNodes();
+                    if (nodes.size() > 0) {
+                        nodeId = nodes.get(0).getId();
+                    }
+                    Wearable.MessageApi.sendMessage(mGoogleApiClient, nodeId, uri, message.getBytes())
+                            .setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
+                                @Override
+                                public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                                    Log.d("2,", "SendRequireMessage:" + sendMessageResult.getStatus());
+                                }
+                            });
+                }
+            }).start();
         }
 
         @Override
@@ -336,6 +372,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
                 }
                 mGoogleApiClient.connect();
+                requireWeatherInfo();
                 invalidate();
             }
 
@@ -349,50 +386,77 @@ public class MyWatchFace extends CanvasWatchFaceService {
             // Draw the background.
             canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
 
-            float mCenterX = 310 / 2f;
-            float mCenterY = 310 / 2f;
+            float mCenterX = 320 / 2f;
+            float mCenterY = 320 / 2f;
 
-            float innerTickRadius = mCenterX - 2;
-            float outerTickRadius = mCenterX;
-            for (int tickIndex = 0; tickIndex < 120; tickIndex++) {
-                float tickRot = (float) (tickIndex * Math.PI * 2 / 120);
-                if(count % 2 == 0) {
-                    if( tickIndex%2 == 0) {
-                        float innerX = (float) Math.sin(tickRot) * innerTickRadius;
-                        float innerY = (float) -Math.cos(tickRot) * innerTickRadius;
-                        float outerX = (float) Math.sin(tickRot) * outerTickRadius;
-                        float outerY = (float) -Math.cos(tickRot) * outerTickRadius;
-                        if(tickIndex/2 == mTime.second)
-                            canvas.drawLine(mCenterX + innerX, mCenterY + innerY,
-                                    mCenterX + outerX, mCenterY + outerY, mTickAndCirclePaint1);
-                        else
-                            canvas.drawLine(mCenterX + innerX, mCenterY + innerY,
-                                    mCenterX + outerX, mCenterY + outerY, mTickAndCirclePaint);
-                    }
-                } else {
-                    if( tickIndex%2 == 1) {
-                        float innerX = (float) Math.sin(tickRot) * innerTickRadius;
-                        float innerY = (float) -Math.cos(tickRot) * innerTickRadius;
-                        float outerX = (float) Math.sin(tickRot) * outerTickRadius;
-                        float outerY = (float) -Math.cos(tickRot) * outerTickRadius;
-                        if(tickIndex/2 == mTime.second)
-                            canvas.drawLine(mCenterX + innerX, mCenterY + innerY,
-                                    mCenterX + outerX, mCenterY + outerY, mTickAndCirclePaint1);
-                        else
-                            canvas.drawLine(mCenterX + innerX, mCenterY + innerY,
-                                    mCenterX + outerX, mCenterY + outerY, mTickAndCirclePaint);
-                    }
-                }
-            }
-            count = count + 1;
-            if(count > 100)
-                    count = 0;
 
+            mTickAndCirclePaint1.setColor(getResources().getColor(R.color.green));
+            float tickRot2 = (float) (mTime.hour * Math.PI * 2 / 12);
+            float innerTickRadius2 = mCenterX - 20;
+            float outerTickRadius2 = mCenterX;
+            float innerX2 = (float) Math.sin(tickRot2) * innerTickRadius2;
+            float innerY2 = (float) -Math.cos(tickRot2) * innerTickRadius2;
+            float outerX2 = (float) Math.sin(tickRot2) * outerTickRadius2;
+            float outerY2 = (float) -Math.cos(tickRot2) * outerTickRadius2;
+            canvas.drawLine(mCenterX + innerX2, mCenterY + innerY2,
+                    mCenterX + outerX2, mCenterY + outerY2, mTickAndCirclePaint1);
+
+
+            mTickAndCirclePaint1.setColor(getResources().getColor(R.color.blue));
+            tickRot2 = (float) (mTime.minute * Math.PI * 2 / 60);
+             innerTickRadius2 = mCenterX - 40;
+             outerTickRadius2 = mCenterX;
+             innerX2 = (float) Math.sin(tickRot2) * innerTickRadius2;
+             innerY2 = (float) -Math.cos(tickRot2) * innerTickRadius2;
+             outerX2 = (float) Math.sin(tickRot2) * outerTickRadius2;
+             outerY2 = (float) -Math.cos(tickRot2) * outerTickRadius2;
+            canvas.drawLine(mCenterX + innerX2, mCenterY + innerY2,
+                    mCenterX + outerX2, mCenterY + outerY2, mTickAndCirclePaint1);
 
             if(!mAmbient) {
-                if(mBackgroundBitmap!=null)
-                    canvas.drawBitmap(mBackgroundBitmap, 320/2-20, mYOffset+60, null);
-                canvas.drawText(mTemperature+"\u00B0" + mTemperaturemin+"\u00B0", 320/2+50, mYOffset + 70, mTextPaint);
+                mTickAndCirclePaint1.setColor(getResources().getColor(R.color.red));
+                float tickRot1 = (float) ((mTime.second+1) * Math.PI * 2 / 60);
+                float innerTickRadius1 = mCenterX - 15;
+                float outerTickRadius1 = mCenterX;
+                float innerX1 = (float) Math.sin(tickRot1) * innerTickRadius1;
+                float innerY1 = (float) -Math.cos(tickRot1) * innerTickRadius1;
+                float outerX1 = (float) Math.sin(tickRot1) * outerTickRadius1;
+                float outerY1 = (float) -Math.cos(tickRot1) * outerTickRadius1;
+                canvas.drawLine(mCenterX + innerX1, mCenterY + innerY1,
+                        mCenterX + outerX1, mCenterY + outerY1, mTickAndCirclePaint1);
+
+                for (int tickIndex = 0; tickIndex < 60; tickIndex++) {
+                    float innerTickRadius;
+                    if(tickIndex%5 == 0){
+                        innerTickRadius = mCenterX - 9;
+                    }else{
+                        innerTickRadius = mCenterX - 2;
+                    }
+                    float tickRot = (float) (tickIndex * Math.PI * 2 / 60);
+
+                    float outerTickRadius = mCenterX;
+                    float innerX = (float) Math.sin(tickRot) * innerTickRadius;
+                    float innerY = (float) -Math.cos(tickRot) * innerTickRadius;
+                    float outerX = (float) Math.sin(tickRot) * outerTickRadius;
+                    float outerY = (float) -Math.cos(tickRot) * outerTickRadius;
+                    canvas.drawLine(mCenterX + innerX, mCenterY + innerY,
+                            mCenterX + outerX, mCenterY + outerY, mTickAndCirclePaint);
+
+
+                }
+            }
+
+            final Rect textBounds = new Rect();
+
+            if(!mAmbient) {
+                if(mBackgroundBitmap!=null) {
+                    canvas.drawBitmap(mBackgroundBitmap, mCenterX - (mBackgroundBitmap.getWidth()/2),mCenterY - 90, null);
+                }
+
+                String t = mTemperature+"\u00B0 / " + mTemperaturemin+"\u00B0";
+
+                mWeatherPaint.getTextBounds(t, 0, t.length(), textBounds);
+                canvas.drawText(t, mCenterX - textBounds.exactCenterX(), mCenterY - textBounds.exactCenterY()+60, mWeatherPaint);
             }
 
             // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
@@ -400,7 +464,11 @@ public class MyWatchFace extends CanvasWatchFaceService {
             String text = mAmbient
                     ? String.format("%d:%02d", mTime.hour, mTime.minute)
                     : String.format("%d:%02d:%02d", mTime.hour, mTime.minute, mTime.second);
-            canvas.drawText(text, 320/2, 320/2, mTextPaint);
+
+
+            mTextPaint.getTextBounds(text, 0, text.length(), textBounds);
+
+            canvas.drawText(text, mCenterX - textBounds.exactCenterX(), mCenterY - textBounds.exactCenterY(), mTextPaint);
 
         }
 
@@ -450,56 +518,38 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 }
             }
 
-            if (config.containsKey(Consts.KEY_WEATHER_TEMPERATURE)) {
-                mTemperature = config.getInt(Consts.KEY_WEATHER_TEMPERATURE);
+            if (config.containsKey(Consts.KEY_WEATHER_TEMPERATUREMAX)) {
+                mTemperature = config.getInt(Consts.KEY_WEATHER_TEMPERATUREMAX);
             }
 
-            if (config.containsKey(Consts.KEY_WEATHER_SUNRISE)) {
-                mTemperaturemin = config.getInt(Consts.KEY_WEATHER_SUNRISE);
+            if (config.containsKey(Consts.KEY_WEATHER_TEMPERATUREMIN)) {
+                mTemperaturemin = config.getInt(Consts.KEY_WEATHER_TEMPERATUREMIN);
             }
 
-            if (config.containsKey(Consts.KEY_WEATHER_SUNSET)) {
+            if (config.containsKey(Consts.KEY_WEATHER_WID)) {
                  //Bitmap getIconResourceForWeatherCondition(config.getInt(Consts.KEY_WEATHER_SUNSET))
-                Log.d("image",config.getInt(Consts.KEY_WEATHER_SUNSET)+"");
-                Resources resources = MyWatchFace.this.getResources();
-                Drawable backgroundDrawable = resources.getDrawable(getIconResourceForWeatherCondition(config.getInt(Consts.KEY_WEATHER_SUNSET)), null);
+                Drawable backgroundDrawable;
+                if(config.getInt(Consts.KEY_WEATHER_WID)==0){
+                    Resources resources = MyWatchFace.this.getResources();
+                     backgroundDrawable = resources.getDrawable(R.drawable.ic_clear, null);
+                }else{
+                    Resources resources = MyWatchFace.this.getResources();
+                     backgroundDrawable = resources.getDrawable(getIconResourceForWeatherCondition(config.getInt(Consts.KEY_WEATHER_WID)), null);
+                }
+
                 mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
-            }
-
-            if (config.containsKey(Consts.KEY_CONFIG_TEMPERATURE_SCALE)) {
-                int scale = config.getInt(Consts.KEY_CONFIG_TEMPERATURE_SCALE);
-                mTemperatureScale = scale;
-            }
-
-            if (config.containsKey(Consts.KEY_CONFIG_THEME)) {
-            }
-
-            if (config.containsKey(Consts.KEY_CONFIG_TIME_UNIT)) {
-            }
-
-            if (config.containsKey(WeatherListener.Consts.KEY_CONFIG_REQUIRE_INTERVAL)) {
-                mRequireInterval = config.getInt(WeatherListener.Consts.KEY_CONFIG_REQUIRE_INTERVAL);
             }
 
             invalidate();
         }
 
         protected void getConfig() {
-            Log.d("e", "Start getting Config");
             Wearable.NodeApi.getLocalNode(mGoogleApiClient).setResultCallback(new ResultCallback<NodeApi.GetLocalNodeResult>() {
                 @Override
                 public void onResult(NodeApi.GetLocalNodeResult getLocalNodeResult) {
                     Uri uri = new Uri.Builder()
                             .scheme("wear")
-                            .path(WeatherListener.Consts.PATH_CONFIG)
-                            .authority(getLocalNodeResult.getNode().getId())
-                            .build();
-
-                    getConfig(uri);
-
-                    uri = new Uri.Builder()
-                            .scheme("wear")
-                            .path(WeatherListener.Consts.PATH_WEATHER_INFO)
+                            .path(Consts.PATH_WEATHER_INFO)
                             .authority(getLocalNodeResult.getNode().getId())
                             .build();
 
@@ -509,7 +559,6 @@ public class MyWatchFace extends CanvasWatchFaceService {
         }
 
         protected void getConfig(Uri uri) {
-
             Wearable.DataApi.getDataItem(mGoogleApiClient, uri)
                     .setResultCallback(
                             new ResultCallback<DataApi.DataItemResult>() {
@@ -539,30 +588,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 return;
 
             mWeatherInfoRequiredTime = timeMs;
-            Wearable.MessageApi.sendMessage(mGoogleApiClient, "", Consts.PATH_WEATHER_REQUIRE, null)
-                    .setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-                        @Override
-                        public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                            Log.d("2,","SendRequireMessage:" + sendMessageResult.getStatus());
-                        }
-                    });
-        }
 
-
-        public class Consts {
-            public static final String KEY_CONFIG_REQUIRE_INTERVAL = "RequireInterval";
-            public static final String KEY_CONFIG_TEMPERATURE_SCALE = "TemperatureScale";
-            public static final String KEY_WEATHER_CONDITION = "Condition";
-            public static final String KEY_WEATHER_SUNRISE = "Sunrise";
-            public static final String KEY_WEATHER_SUNSET = "Sunset";
-            public static final String KEY_CONFIG_THEME = "Theme";
-            public static final String KEY_CONFIG_TIME_UNIT = "TimeUnit";
-            public static final String KEY_WEATHER_TEMPERATURE = "Temperature";
-            public static final String KEY_WEATHER_UPDATE_TIME = "Update_Time";
-            public static final String PATH_CONFIG = "/WeatherWatchFace/Config/";
-            public static final String PATH_WEATHER_INFO = "/WeatherWatchFace/WeatherInfo";
-            public static final String PATH_WEATHER_REQUIRE = "/WeatherService/Require";
-            public static final String COLON_STRING = ":";
+            retrieveDeviceNode("", Consts.PATH_WEATHER_REQUIRE);
         }
 
         public int getIconResourceForWeatherCondition(int weatherId) {

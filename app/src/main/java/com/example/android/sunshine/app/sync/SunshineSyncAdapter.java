@@ -62,7 +62,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
 
-    public static String APPID = "e38b12231c50b5234b6edebe942168d6";
+    public static String APPID = "";
 
 
     private static final String[] NOTIFY_WEATHER_PROJECTION = new String[] {
