@@ -23,7 +23,9 @@ import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -141,6 +143,9 @@ public class MyWatchFace extends CanvasWatchFaceService {
         Paint mTickAndCirclePaint;
         Paint mTickAndCirclePaint1;
 
+        Bitmap bmp[];
+
+
 
         public Engine() {
             mGoogleApiClient = new GoogleApiClient.Builder(MyWatchFace.this)
@@ -251,6 +256,12 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
 
             mGoogleApiClient.connect();
+
+            bmp = new Bitmap[4];
+            bmp[0] = BitmapFactory.decodeResource(getResources(), R.drawable.sag);
+            bmp[1] = BitmapFactory.decodeResource(getResources(), R.drawable.orta);
+            bmp[2] = BitmapFactory.decodeResource(getResources(), R.drawable.sol);
+            bmp[3] = BitmapFactory.decodeResource(getResources(), R.drawable.orta);
         }
 
         @Override
@@ -390,6 +401,13 @@ public class MyWatchFace extends CanvasWatchFaceService {
             float mCenterY = 320 / 2f;
 
 
+            //Draw animation
+
+            Matrix rotator = new Matrix();
+
+            rotator.postRotate((float)(Math.toDegrees(mTime.second * Math.PI * 2 / 60)),mCenterY,mCenterX);
+            canvas.drawBitmap(bmp[mTime.second % 4], rotator, mBackgroundPaint);
+
             mTickAndCirclePaint1.setColor(getResources().getColor(R.color.green));
             float tickRot2 = (float) (mTime.hour * Math.PI * 2 / 12);
             float innerTickRadius2 = mCenterX - 20;
@@ -463,7 +481,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mTime.setToNow();
             String text = mAmbient
                     ? String.format("%d:%02d", mTime.hour, mTime.minute)
-                    : String.format("%d:%02d:%02d", mTime.hour, mTime.minute, mTime.second);
+                    : String.format("%d:%02d", mTime.hour, mTime.minute, mTime.second);
 
 
             mTextPaint.getTextBounds(text, 0, text.length(), textBounds);
