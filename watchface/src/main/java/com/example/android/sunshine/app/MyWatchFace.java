@@ -143,7 +143,9 @@ public class MyWatchFace extends CanvasWatchFaceService {
         Paint mTickAndCirclePaint;
         Paint mTickAndCirclePaint1;
 
-        Bitmap bmp[];
+        Bitmap bmpsecond[];
+        Bitmap bmphour[];
+        Bitmap bmpminute[];
 
 
 
@@ -257,11 +259,19 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
             mGoogleApiClient.connect();
 
-            bmp = new Bitmap[4];
-            bmp[0] = BitmapFactory.decodeResource(getResources(), R.drawable.sag);
-            bmp[1] = BitmapFactory.decodeResource(getResources(), R.drawable.orta);
-            bmp[2] = BitmapFactory.decodeResource(getResources(), R.drawable.sol);
-            bmp[3] = BitmapFactory.decodeResource(getResources(), R.drawable.orta);
+            bmpsecond = new Bitmap[4];
+            bmpsecond[0] = BitmapFactory.decodeResource(getResources(), R.drawable.sag);
+            bmpsecond[1] = BitmapFactory.decodeResource(getResources(), R.drawable.orta);
+            bmpsecond[2] = BitmapFactory.decodeResource(getResources(), R.drawable.sol);
+            bmpsecond[3] = BitmapFactory.decodeResource(getResources(), R.drawable.orta);
+
+            bmphour = new Bitmap[2];
+            bmphour[0] = BitmapFactory.decodeResource(getResources(), R.drawable.girlrun);
+            bmphour[1] = BitmapFactory.decodeResource(getResources(), R.drawable.girlstand);
+
+            bmpminute = new Bitmap[2];
+            bmpminute[0] = BitmapFactory.decodeResource(getResources(), R.drawable.runman);
+            bmpminute[1] = BitmapFactory.decodeResource(getResources(), R.drawable.stayman);
         }
 
         @Override
@@ -405,11 +415,68 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
             Matrix rotator = new Matrix();
 
-            rotator.postRotate((float)(Math.toDegrees(mTime.second * Math.PI * 2 / 60)),mCenterY,mCenterX);
-            canvas.drawBitmap(bmp[mTime.second % 4], rotator, mBackgroundPaint);
+            float tickRot5 = (float) ((mTime.second+2) * Math.PI * 2 / 60);
+            float innerTickRadius10 = mCenterX - 30;
+            float innerX5 = (float) Math.sin(tickRot5) * innerTickRadius10;
+            float innerY5 = (float) -Math.cos(tickRot5) * innerTickRadius10;
 
+            rotator.setTranslate(mCenterX + innerX5, mCenterY + innerY5);
+            rotator.postRotate((float) Math.toDegrees((float) ((mTime.second + 1) * Math.PI * 2 / 60)) - 180, mCenterX + innerX5, mCenterY + innerY5);
+            canvas.drawBitmap(bmpsecond[mTime.second % 4], rotator, mBackgroundPaint);
+
+
+
+
+
+            if(mTime.second>58){
+                rotator.reset();
+                tickRot5 = (float) (((mTime.minute+3) * Math.PI * 2 / 60)+Math.PI * 2 / 120);
+                innerTickRadius10 = mCenterX - 70;
+                innerX5 = (float) Math.sin(tickRot5) * innerTickRadius10;
+                innerY5 = (float) -Math.cos(tickRot5) * innerTickRadius10;
+                rotator.setTranslate(mCenterX + innerX5, mCenterY + innerY5);
+                rotator.postRotate((float)Math.toDegrees((float)((mTime.minute) * Math.PI * 2 / 60))-180, mCenterX + innerX5, mCenterY + innerY5);
+                canvas.drawBitmap(bmpminute[0], rotator, mBackgroundPaint);
+            }else{
+                rotator.reset();
+
+                tickRot5 = (float) ((mTime.minute+2) * Math.PI * 2 / 60);
+                innerTickRadius10 = mCenterX - 70;
+                innerX5 = (float) Math.sin(tickRot5) * innerTickRadius10;
+                innerY5 = (float) -Math.cos(tickRot5) * innerTickRadius10;
+                rotator.setTranslate(mCenterX + innerX5, mCenterY + innerY5);
+                rotator.postRotate((float) Math.toDegrees((float) ((mTime.minute) * Math.PI * 2 / 60)) - 180, mCenterX + innerX5, mCenterY + innerY5);
+                canvas.drawBitmap(bmpminute[1], rotator, mBackgroundPaint);
+            }
+
+            if((mTime.minute>59)&&(mTime.second>58)){
+                rotator.reset();
+                tickRot5 = (float) (((mTime.hour+0.3) * Math.PI * 2 / 12)+Math.PI * 2 / 24);
+                innerTickRadius10 = mCenterX - 70;
+                innerX5 = (float) Math.sin(tickRot5) * innerTickRadius10;
+                innerY5 = (float) -Math.cos(tickRot5) * innerTickRadius10;
+                rotator.setTranslate(mCenterX + innerX5, mCenterY + innerY5);
+                rotator.postRotate((float)Math.toDegrees((float)((mTime.hour) * Math.PI * 2 / 12))-180, mCenterX + innerX5, mCenterY + innerY5);
+                canvas.drawBitmap(bmphour[0], rotator, mBackgroundPaint);
+            }else{
+                rotator.reset();
+
+                tickRot5 = (float) ((mTime.hour+0.3) * Math.PI * 2 / 12);
+                innerTickRadius10 = mCenterX - 70;
+                innerX5 = (float) Math.sin(tickRot5) * innerTickRadius10;
+                innerY5 = (float) -Math.cos(tickRot5) * innerTickRadius10;
+                rotator.setTranslate(mCenterX + innerX5, mCenterY + innerY5);
+                rotator.postRotate((float) Math.toDegrees((float) ((mTime.hour) * Math.PI * 2 / 12)) - 180, mCenterX + innerX5, mCenterY + innerY5);
+                canvas.drawBitmap(bmphour[1], rotator, mBackgroundPaint);
+            }
+
+
+
+            //canvas.drawLine(mCenterX + innerX5, mCenterY + innerY5,
+            //        mCenterX + innerX5+1, mCenterY + innerY5+1, mTickAndCirclePaint1);
+/*
             mTickAndCirclePaint1.setColor(getResources().getColor(R.color.green));
-            float tickRot2 = (float) (mTime.hour * Math.PI * 2 / 12);
+            float tickRot2 = (float) ((mTime.hour * Math.PI * 2 / 12)+mTime.minute*(Math.PI * 2 / (12*60)));
             float innerTickRadius2 = mCenterX - 20;
             float outerTickRadius2 = mCenterX;
             float innerX2 = (float) Math.sin(tickRot2) * innerTickRadius2;
@@ -418,10 +485,10 @@ public class MyWatchFace extends CanvasWatchFaceService {
             float outerY2 = (float) -Math.cos(tickRot2) * outerTickRadius2;
             canvas.drawLine(mCenterX + innerX2, mCenterY + innerY2,
                     mCenterX + outerX2, mCenterY + outerY2, mTickAndCirclePaint1);
+*
 
-
-            mTickAndCirclePaint1.setColor(getResources().getColor(R.color.blue));
-            tickRot2 = (float) (mTime.minute * Math.PI * 2 / 60);
+            /*mTickAndCirclePaint1.setColor(getResources().getColor(R.color.blue));
+            tickRot2 = (float) ((mTime.minute * Math.PI * 2 / 60)+mTime.second*(Math.PI * 2 / (60*60)));
              innerTickRadius2 = mCenterX - 40;
              outerTickRadius2 = mCenterX;
              innerX2 = (float) Math.sin(tickRot2) * innerTickRadius2;
@@ -429,10 +496,10 @@ public class MyWatchFace extends CanvasWatchFaceService {
              outerX2 = (float) Math.sin(tickRot2) * outerTickRadius2;
              outerY2 = (float) -Math.cos(tickRot2) * outerTickRadius2;
             canvas.drawLine(mCenterX + innerX2, mCenterY + innerY2,
-                    mCenterX + outerX2, mCenterY + outerY2, mTickAndCirclePaint1);
+                    mCenterX + outerX2, mCenterY + outerY2, mTickAndCirclePaint1);*/
 
             if(!mAmbient) {
-                mTickAndCirclePaint1.setColor(getResources().getColor(R.color.red));
+                /*mTickAndCirclePaint1.setColor(getResources().getColor(R.color.red));
                 float tickRot1 = (float) ((mTime.second+1) * Math.PI * 2 / 60);
                 float innerTickRadius1 = mCenterX - 15;
                 float outerTickRadius1 = mCenterX;
@@ -442,7 +509,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 float outerY1 = (float) -Math.cos(tickRot1) * outerTickRadius1;
                 canvas.drawLine(mCenterX + innerX1, mCenterY + innerY1,
                         mCenterX + outerX1, mCenterY + outerY1, mTickAndCirclePaint1);
-
+                */
                 for (int tickIndex = 0; tickIndex < 60; tickIndex++) {
                     float innerTickRadius;
                     if(tickIndex%5 == 0){
